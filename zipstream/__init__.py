@@ -208,27 +208,27 @@ class ZipFile(zipfile.ZipFile):
         self._comment = comment
         self._didModify = True
 
-    def write(self, filename, arcname=None, compress_type=None):
+    def write(self, filename, arcname=None, compress_type=None, timestamp=None):
         # TODO: Reflect python's Zipfile.write
         #   - if filename is file, write as file
         #   - if filename is directory, write an empty directory
-        kwargs = {'filename': filename, 'arcname': arcname, 'compress_type': compress_type}
+        kwargs = {'filename': filename, 'arcname': arcname, 'compress_type': compress_type, 'timestamp': timestamp}
         self.paths_to_write.append(kwargs)
 
-    def write_iter(self, arcname, iterable, compress_type=None):
+    def write_iter(self, arcname, iterable, compress_type=None, timestamp=None):
         """Write the bytes iterable `iterable` to the archive under the name `arcname`."""
-        kwargs = {'arcname': arcname, 'iterable': iterable, 'compress_type': compress_type}
+        kwargs = {'arcname': arcname, 'iterable': iterable, 'compress_type': compress_type, 'timestamp': timestamp}
         self.paths_to_write.append(kwargs)
 
-    def writestr(self, arcname, data, compress_type=None):
+    def writestr(self, arcname, data, compress_type=None, timestamp=None):
         """
         Writes a str into ZipFile by wrapping data as a generator
         """
         def _iterable():
             yield data
-        return self.write_iter(arcname, _iterable(), compress_type=compress_type)
+        return self.write_iter(arcname, _iterable(), compress_type=compress_type, timestamp=timestamp)
 
-    def __write(self, filename=None, iterable=None, arcname=None, compress_type=None):
+    def __write(self, filename=None, iterable=None, arcname=None, compress_type=None, timestamp=None):
         """Put the bytes from filename into the archive under the name
         `arcname`."""
         if not self.fp:
@@ -240,10 +240,16 @@ class ZipFile(zipfile.ZipFile):
         if filename:
             st = os.stat(filename)
             isdir = stat.S_ISDIR(st.st_mode)
-            mtime = time.localtime(st.st_mtime)
-            date_time = mtime[0:6]
+            if not timestamp:
+                timestamp = st.st_mtime
         else:
-            st, isdir, date_time = None, False, time.localtime()[0:6]
+            st, isdir = None, False
+            if not timestamp:
+                timestamp = time.time()
+
+        # Turn epoch into tuple
+        date_time = time.localtime(timestamp)[0:6]
+
         # Create ZipInfo instance to store file information
         if arcname is None:
             arcname = filename
