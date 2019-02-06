@@ -165,7 +165,7 @@ class ZipInfo(zipfile.ZipInfo):
 
 
 class ZipFile(zipfile.ZipFile):
-    def __init__(self, fileobj=None, mode='w', compression=ZIP_STORED, allowZip64=False):
+    def __init__(self, fileobj=None, mode='w', compression=ZIP_STORED, allowZip64=True):
         """Open the ZIP file with mode write "w"."""
         if mode not in ('w', ):
             raise RuntimeError('zipstream.ZipFile() requires mode "w"')
